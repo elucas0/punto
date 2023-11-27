@@ -1,4 +1,4 @@
-import { CaseType } from "../index";
+import { CaseType } from "./Game";
 
 type CaseTypeProps = CaseType & {
     onClick: () => void;

@@ -5,7 +5,7 @@ const app = express();
 const port = 3001;
 
 const url = 'mongodb://localhost:27017';
-const dbName = 'mydatabase';
+const dbName = 'punto';
 const collectionName = 'game';
 const clientOptions = { useNewUrlParser: true, useUnifiedTopology: true };
 
