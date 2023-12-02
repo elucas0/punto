@@ -1,11 +1,13 @@
-import { useState } from 'react';
-import { Card } from './Card';
+import { useEffect, useState } from 'react';
+import { Card, CardType } from './Card';
 import { Case } from './Case';
+import { DeckSection } from './DeckSection';
+import { DeckType } from './Deck';
 
 export type CaseType = {
     row: number | null,
     col: number | null,
-    color: Colors | "slate",
+    color: Colors | "gray",
     number: number,
     canBePlayed: boolean | null,
     isCard: boolean,
@@ -26,12 +28,20 @@ enum Colors {
     yellow = "yellow",
 }
 
-const deck: CaseType[] = [];
+const mainDeck: CardType[] = [];
 const moves: Move[] = [];
 const maxSideSize = 6;
 
-const revealCard = () => {
-
+// Fonction pour générer les cartes du jeu : 72 cartes de 4 couleurs différentes (2 séries de 1-9 par couleur)
+const generateDeck = () => {
+    for (let i = 0; i < 2; i++) {
+        for (const color of Object.values(Colors)) {
+            for (let j = 1; j <= 9; j++) {
+                mainDeck.push({ row: null, col: null, color, number: j, canBePlayed: null, isCard: true, onClick: () => { } });
+            }
+        }
+    }
+    return mainDeck;
 }
 
 // Fonction pour générer la grille initiale en fonction de la taille donnée
@@ -40,16 +50,17 @@ const generateInitialGrid = (size: number): CaseType[][] => {
     for (let i = 0; i < size; i++) {
         initialGrid[i] = [];
         for (let j = 0; j < size; j++) {
-            initialGrid[i][j] = { row: i, col: j, color: "slate", number: 0, canBePlayed: false, isCard: false };
+            initialGrid[i][j] = { row: i, col: j, color: "gray", number: 0, canBePlayed: false, isCard: false };
         }
     }
-    initialGrid[Math.floor(size / 2)][Math.floor(size / 2)] = { row: Math.floor(size / 2), col: Math.floor(size / 2), color: "slate", number: 0, canBePlayed: true, isCard: false };
+    initialGrid[Math.floor(size / 2)][Math.floor(size / 2)] = { row: Math.floor(size / 2), col: Math.floor(size / 2), color: "gray", number: 0, canBePlayed: true, isCard: false };
     return initialGrid;
 };
 
 export function Game() {
     const [gridSize, setGridSize] = useState(9);
     const [grid, setGrid] = useState<CaseType[][]>(generateInitialGrid(gridSize));
+    const [mainDeck, setMainDeck] = useState<CardType[]>(generateDeck());
     const [round, setRound] = useState<number>(0);
     const [playerCount, setPlayerCount] = useState<number>(2);
 
@@ -102,7 +113,6 @@ export function Game() {
     };
 
     const playCard = (card: CaseType, i: number, j: number) => {
-        console.log(card, i, j)
         if (card.number > grid[i][j].number) {
             const newGrid = [...grid];
             newGrid[i][j] = card;
@@ -123,7 +133,6 @@ export function Game() {
                 const { row, col } = dir;
                 if (row >= 0 && row < gridSize && col >= 0 && col < gridSize && !newGrid[row][col].isCard) {
                     newGrid[row][col].canBePlayed = true;
-                    console.log(`Case adjacente à la case placée : ${newGrid[row][col]}`);
                 }
             }
 
@@ -146,28 +155,83 @@ export function Game() {
     const number = Math.floor(Math.random() * 9) + 1;
     const [newCard, setNewCard] = useState<CaseType>({ color, number, row: null, col: null, canBePlayed: null, isCard: true });
 
+    const distributeDeck = (mainDeck: CardType[], colorsPerPlayer: number, neutralCount?: number): DeckType[] => {
+        const playersDecks: DeckType[] = Array.from({ length: playerCount }, (_, index) => ({
+            player: index + 1,
+            cards: [],
+            color: "gray",
+        }));
+
+        // Distribuer les cartes de chaque couleur aux joueurs
+        const nonNeutralColors = Object.values(Colors).filter(color => color !== DefaultColor.white);
+        for (const color of nonNeutralColors) {
+            for (let i = 0; i < playerCount; i++) {
+                const playerDeck = playersDecks[i];
+                const cardsToDistribute = mainDeck.filter((card) => card.color === color);
+                playerDeck.cards.push(...cardsToDistribute);
+                playerDeck.color = color;
+                mainDeck = mainDeck.filter((card) => !cardsToDistribute.includes(card));
+            }
+        }
+
+        // Distribuer les cartes de la couleur neutre (le cas échéant)
+        if (neutralCount !== undefined) {
+            const neutralCards = mainDeck.filter((card) => card.color === DefaultColor.white);
+            for (let i = 0; i < playerCount; i++) {
+                const playerDeck = playersDecks[i];
+                playerDeck.cards.push(...neutralCards.slice(i * neutralCount, (i + 1) * neutralCount));
+                playerDeck.color = DefaultColor.white;
+            }
+        }
+        return playersDecks;
+    };
+
+    const shuffleDeck = () => {
+        switch (playerCount) {
+            // chaque joueur reçoit toutes les cartes de 2 couleurs.
+            case 2:
+                return distributeDeck(mainDeck, 2);
+            // chaque joueur reçoit toutes les cartes d’une couleur et 6 cartes de la quatrième couleur, la couleur neutre
+            case 3:
+                return distributeDeck(mainDeck, 1, 6);
+            // chaque joueur reçoit toutes les cartes d’une couleur.
+            case 4:
+                return distributeDeck(mainDeck, 1);
+            default:
+                throw new Error("Nombre de joueurs non pris en charge");
+        }
+    };
+
+
     return (
-        <><div>
-            <p>Nombre de joueurs:</p>
-            <input name="playerCount" type='number' min={2} max={4} placeholder='Nombre de joueurs' value={playerCount} onChange={e => setPlayerCount(parseInt(e.target.value))}></input>
-            <p>Tour {round}</p>
-            <p>Au tour du joueur {round % playerCount + 1}</p>
-        </div><main className='flex justify-center items-center'>
+        <>
+            <div className='flex justify-center text-lg font-poppins text-white gap-10'>
+                <p>Tour {round}</p>
+                <p>Au tour du joueur {round % playerCount + 1}</p>
+            </div><main className='flex justify-center items-center'>
                 <div className="flex">
                     {grid.map((row, i) => (
                         <div key={i}>
                             {row.map((column, j) => (
                                 <div key={j}>
-                                    {!grid[i][j].isCard ? <Case row={i} col={j} color='slate' number={grid[i][j].number} onClick={() => playCard(newCard, i, j)} canBePlayed={grid[i][j].canBePlayed} isCard={false} /> :
+                                    {!grid[i][j].isCard ? <Case row={i} col={j} color='gray' number={grid[i][j].number} onClick={() => playCard(newCard, i, j)} canBePlayed={grid[i][j].canBePlayed} isCard={false} /> :
                                         <Card color={grid[i][j].color} number={grid[i][j].number} onClick={() => playCard(newCard, i, j)} row={i} col={j} canBePlayed={grid[i][j].canBePlayed} isCard={true} />}
                                 </div>
                             ))}
                         </div>
                     ))}
                 </div>
-            </main><div>
+            </main>
+            <div>
                 <button className='bg-gray-400' onClick={generateNewCard}>Get new card</button>
-                <Card color={newCard.color} number={newCard.number} onClick={() => revealCard} row={null} col={null} canBePlayed={null} isCard={true} />
-            </div><div className='border-red-500'></div><div className='border-green-500'></div><div className='border-blue-500'></div><div className='border-yellow-500'></div><div className='border-slate-800'></div><div className='bg-slate-200'></div></>
+                {/* <Card color={newCard.color} number={newCard.number} onClick={() => revealCard} row={null} col={null} canBePlayed={null} isCard={true} /> */}
+                <DeckSection decks={shuffleDeck()} />
+            </div>
+            <div className='border-red-500'></div>
+            <div className='border-green-500'></div>
+            <div className='border-blue-500'></div>
+            <div className='border-yellow-500'></div>
+            <div className='border-gray-800'></div>
+            <div className='bg-gray-700'></div></>
     );
 }

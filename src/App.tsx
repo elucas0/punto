@@ -1,6 +1,4 @@
-import './App.css'
 import { TabsGroup } from './game/components/Tabs';
-
 
 enum Colors {
   red = "red",
