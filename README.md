@@ -1,30 +1,22 @@
-# React + TypeScript + Vite
+# Punto
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Initial setup
+`npm install`
 
-Currently, two official plugins are available:
+## Lancer les différentes API
+### MongoDB
+`npm run server-mongo`
+### MySQL
+`npm run server-mysql`
+### SQLite
+`npm run server-sqlite`
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Lancer le jeu
+`npm run dev`
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
-```
-
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+## Features
+- Jeu Punto jusqu'à 4 joueurs
+- Envoyer les données d'une partie à la base de données MongoDB
+- Génération de données aléatoires sur la base MongoDB
+- Accéder à l'historique des parties sur la base MongoDB et MySQL
+- Exporter les données des bases MongoDB et MySQL en JSON
