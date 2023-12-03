@@ -3,6 +3,14 @@ import { Card, CardType } from './Card';
 import { Case } from './Case';
 import { DeckSection } from './DeckSection';
 import { DeckType } from './Deck';
+import { GameData, GameState } from '..';
+
+type GameProps = {
+    gameData: GameData;
+    setGameData: (gameData: GameData) => void;
+    playerCount: number;
+    setGameState: (gameState: GameState) => void;
+}
 
 export type CaseType = {
     row: number | null,
@@ -13,12 +21,12 @@ export type CaseType = {
     isCard: boolean,
 }
 
-type Move = {
-    row: number,
-    col: number,
-    color: Colors,
-    player: number,
-    round: number,
+export type Move = {
+    player: string;
+    coordinates: { row: number; col: number };
+    color: string;
+    number: number;
+    round: number;
 }
 
 enum Colors {
@@ -57,12 +65,13 @@ const generateInitialGrid = (size: number): CaseType[][] => {
     return initialGrid;
 };
 
-export function Game() {
+export function Game({ gameData, setGameData, playerCount, setGameState }: GameProps) {
     const [gridSize, setGridSize] = useState(9);
     const [grid, setGrid] = useState<CaseType[][]>(generateInitialGrid(gridSize));
     const [mainDeck, setMainDeck] = useState<CardType[]>(generateDeck());
-    const [round, setRound] = useState<number>(0);
-    const [playerCount, setPlayerCount] = useState<number>(2);
+    const [round, setRound] = useState<number>(1);
+    const [moves, setMoves] = useState<Move[]>([]);
+    const [currentPlayer, setCurrentPlayer] = useState<string>(gameData.players[round % playerCount]);
 
     const isWon = (row: number, col: number, card: CaseType) => {
         const directions = [
@@ -136,12 +145,18 @@ export function Game() {
                 }
             }
 
+            setMoves((prevMoves) => [...prevMoves, { player: currentPlayer, coordinates: { row: i, col: j }, color: card.color, number: card.number, round }]);
             setGrid(newGrid);
             generateNewCard();
-            setRound(round + 1);
             if (isWon(i, j, card)) {
-                alert(`Player ${round % playerCount + 1} won!`);
+                alert(`${currentPlayer} won!`);
+                setGameData({ ...gameData, moves: moves, winner: currentPlayer, date: new Date() });
+                setGameState('end');
+            } else {
+                setRound(round + 1);
+                setCurrentPlayer(gameData.players[round % playerCount]);
             }
+
         }
     }
 
@@ -155,59 +170,62 @@ export function Game() {
     const number = Math.floor(Math.random() * 9) + 1;
     const [newCard, setNewCard] = useState<CaseType>({ color, number, row: null, col: null, canBePlayed: null, isCard: true });
 
-    const distributeDeck = (mainDeck: CardType[], colorsPerPlayer: number, neutralCount?: number): DeckType[] => {
-        const playersDecks: DeckType[] = Array.from({ length: playerCount }, (_, index) => ({
-            player: index + 1,
-            cards: [],
-            color: "gray",
-        }));
+    // const distributeDeck = (mainDeck: CardType[], colorsPerPlayer: number, neutralCount?: number): DeckType[] => {
+    //     const playersDecks: DeckType[] = Array.from({ length: playerCount }, (_, index) => ({
+    //         player: index + 1,
+    //         cards: [],
+    //         color: "gray",
+    //     }));
 
-        // Distribuer les cartes de chaque couleur aux joueurs
-        const nonNeutralColors = Object.values(Colors).filter(color => color !== DefaultColor.white);
-        for (const color of nonNeutralColors) {
-            for (let i = 0; i < playerCount; i++) {
-                const playerDeck = playersDecks[i];
-                const cardsToDistribute = mainDeck.filter((card) => card.color === color);
-                playerDeck.cards.push(...cardsToDistribute);
-                playerDeck.color = color;
-                mainDeck = mainDeck.filter((card) => !cardsToDistribute.includes(card));
-            }
-        }
+    //     // Distribuer les cartes de chaque couleur aux joueurs
+    //     const nonNeutralColors = Object.values(Colors).filter(color => color !== DefaultColor.white);
+    //     for (const color of nonNeutralColors) {
+    //         for (let i = 0; i < playerCount; i++) {
+    //             const playerDeck = playersDecks[i];
+    //             const cardsToDistribute = mainDeck.filter((card) => card.color === color);
+    //             playerDeck.cards.push(...cardsToDistribute);
+    //             playerDeck.color = color;
+    //             mainDeck = mainDeck.filter((card) => !cardsToDistribute.includes(card));
+    //         }
+    //     }
 
-        // Distribuer les cartes de la couleur neutre (le cas échéant)
-        if (neutralCount !== undefined) {
-            const neutralCards = mainDeck.filter((card) => card.color === DefaultColor.white);
-            for (let i = 0; i < playerCount; i++) {
-                const playerDeck = playersDecks[i];
-                playerDeck.cards.push(...neutralCards.slice(i * neutralCount, (i + 1) * neutralCount));
-                playerDeck.color = DefaultColor.white;
-            }
-        }
-        return playersDecks;
-    };
+    //     // Distribuer les cartes de la couleur neutre (le cas échéant)
+    //     if (neutralCount !== undefined) {
+    //         const neutralCards = mainDeck.filter((card) => card.color === DefaultColor.white);
+    //         for (let i = 0; i < playerCount; i++) {
+    //             const playerDeck = playersDecks[i];
+    //             playerDeck.cards.push(...neutralCards.slice(i * neutralCount, (i + 1) * neutralCount));
+    //             playerDeck.color = DefaultColor.white;
+    //         }
+    //     }
+    //     return playersDecks;
+    // };
 
-    const shuffleDeck = () => {
-        switch (playerCount) {
-            // chaque joueur reçoit toutes les cartes de 2 couleurs.
-            case 2:
-                return distributeDeck(mainDeck, 2);
-            // chaque joueur reçoit toutes les cartes d’une couleur et 6 cartes de la quatrième couleur, la couleur neutre
-            case 3:
-                return distributeDeck(mainDeck, 1, 6);
-            // chaque joueur reçoit toutes les cartes d’une couleur.
-            case 4:
-                return distributeDeck(mainDeck, 1);
-            default:
-                throw new Error("Nombre de joueurs non pris en charge");
-        }
-    };
+    // const shuffleDeck = () => {
+    //     switch (playerCount) {
+    //         // chaque joueur reçoit toutes les cartes de 2 couleurs.
+    //         case 2:
+    //             return distributeDeck(mainDeck, 2);
+    //         // chaque joueur reçoit toutes les cartes d’une couleur et 6 cartes de la quatrième couleur, la couleur neutre
+    //         case 3:
+    //             return distributeDeck(mainDeck, 1, 6);
+    //         // chaque joueur reçoit toutes les cartes d’une couleur.
+    //         case 4:
+    //             return distributeDeck(mainDeck, 1);
+    //         default:
+    //             throw new Error("Nombre de joueurs non pris en charge");
+    //     }
+    // };
 
+    const revealCard = () => {
+
+    }
 
     return (
         <>
             <div className='flex justify-center text-lg font-poppins text-white gap-10'>
                 <p>Tour {round}</p>
-                <p>Au tour du joueur {round % playerCount + 1}</p>
+                <p>Au tour de {currentPlayer}</p>
             </div><main className='flex justify-center items-center'>
                 <div className="flex">
                     {grid.map((row, i) => (
@@ -224,8 +242,8 @@ export function Game() {
             </main>
             <div>
                 <button className='bg-gray-400' onClick={generateNewCard}>Get new card</button>
-                {/* <Card color={newCard.color} number={newCard.number} onClick={() => revealCard} row={null} col={null} canBePlayed={null} isCard={true} /> */}
-                <DeckSection decks={shuffleDeck()} />
+                <Card color={newCard.color} number={newCard.number} onClick={() => revealCard} row={null} col={null} canBePlayed={null} isCard={true} />
+                {/* <DeckSection decks={shuffleDeck()} /> */}
             </div>
             <div className='border-red-500'></div>
             <div className='border-green-500'></div>

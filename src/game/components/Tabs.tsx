@@ -5,12 +5,13 @@ import {
   Tab,
   TabPanel,
 } from "@material-tailwind/react";
-import { Export } from "../../tools/Export";
+import { Maintenance } from "../../tools/Maintenance";
 import { Generator } from "../../tools/Generator";
 import { History } from "../../tools/History";
 import { MainMenu } from "..";
-import { ArrowPathIcon, ArrowUpOnSquareIcon, ClockIcon, HomeIcon } from "@heroicons/react/20/solid";
-import React from "react";
+import { ArrowPathIcon, ClockIcon, Cog6ToothIcon, HomeIcon } from "@heroicons/react/20/solid";
+import React, { useState } from "react";
+import { DbType } from "./DbSelector";
 
 type TabType = {
   label: string;
@@ -20,31 +21,33 @@ type TabType = {
 }[];
 
 export function TabsGroup() {
+  const [selectedDb, setSelectedDb] = useState<DbType>();
+
   const data: TabType = [
     {
       label: "Menu",
       value: "menu",
       icon: HomeIcon,
-      component: <MainMenu />,
-    },
-    {
-      label: "Export",
-      value: "export",
-      icon: ArrowUpOnSquareIcon,
-      component: <Export />,
+      component: <MainMenu selectedDb={selectedDb} setSelectedDb={setSelectedDb} />,
     },
     {
       label: "Générateur",
       value: "generate",
       icon: ArrowPathIcon,
-      component: <Generator />,
+      component: <Generator selectedDb={selectedDb} setSelectedDb={setSelectedDb} />,
     },
     {
       label: "Historique",
       value: "history",
       icon: ClockIcon,
-      component: <History />,
-    }
+      component: <History selectedDb={selectedDb} setSelectedDb={setSelectedDb} />,
+    },
+    {
+      label: "Maintenance",
+      value: "maintenance",
+      icon: Cog6ToothIcon,
+      component: <Maintenance selectedDb={selectedDb} setSelectedDb={setSelectedDb} />,
+    },
   ];
 
   return (

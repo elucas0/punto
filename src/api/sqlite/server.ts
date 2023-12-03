@@ -1,13 +1,20 @@
-import express from 'express';
-import sqlite3 from 'sqlite3';
+import cors from "cors";
+import express from "express";
+import sqlite3 from "sqlite3";
+import { gameRoutes } from "./routes/gameRoutes";
+import { playerRoutes } from "./routes/playerRoutes";
+import { moveRoutes } from "./routes/moveRoutes";
 
 const app = express();
-const port = 3000;
+const port = 3002;
 
-// Connectez-vous à la base de données SQLite (ou créez-la si elle n'existe pas)
-const db = new sqlite3.Database('games.db');
+const db = new sqlite3.Database('./games.db', (err) => {
+  if (err) {
+    console.error(err.message);
+  }
+  console.log('Connected to the games database.');
+});
 
-// Créez la table des joueurs s'il n'existe pas
 db.serialize(() => {
   db.run(`
     CREATE TABLE IF NOT EXISTS players (
@@ -16,42 +23,38 @@ db.serialize(() => {
     )
   `);
 
-  // Créez la table des parties s'il n'existe pas
   db.run(`
     CREATE TABLE IF NOT EXISTS games (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      winner INTEGER,
       date TEXT
+      FOREIGN KEY (winner) REFERENCES players(id)
     )
   `);
 
-  // Créez la table des mouvements s'il n'existe pas
   db.run(`
     CREATE TABLE IF NOT EXISTS moves (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      gameId INTEGER,
-      playerId INTEGER,
-      coordinates TEXT,
+      game_id INTEGER,
+      player_id INTEGER,
+      card_row INTEGER,
+      card_col INTEGER,
       color TEXT,
       number INTEGER,
-      FOREIGN KEY (gameId) REFERENCES games (id),
-      FOREIGN KEY (playerId) REFERENCES players (id)
+      round INTEGER,
+      FOREIGN KEY (game_id) REFERENCES games(id),
+      FOREIGN KEY (player_id) REFERENCES players(id)
     )
   `);
 });
 
-// Middleware pour parser le corps de la requête en JSON
 app.use(express.json());
+app.use(cors());
 
-// Routes CRUD pour les joueurs
-// ...
+app.use("/api/games", gameRoutes);
+app.use("/api/players", playerRoutes);
+app.use("/api/moves", moveRoutes);
 
-// Routes CRUD pour les parties
-// ...
-
-// Routes CRUD pour les mouvements
-// ...
-
-// Lancez le serveur
 app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
+  console.log(`SQLite server running on port ${port}`);
 });

@@ -7,9 +7,10 @@ export interface GameDocument extends mongoose.Document {
     coordinates: { row: number; col: number };
     color: string;
     number: number;
+    round: number;
   }[];
   winner?: string;
-  date: Date;
+  date?: Date;
 }
 
 const gameSchema = new Schema<GameDocument>({
@@ -24,12 +25,13 @@ const gameSchema = new Schema<GameDocument>({
         },
         color: { type: String, required: true },
         number: { type: Number, required: true },
+        round: { type: Number, required: true },
       },
     ],
     default: [],
   },
   winner: { type: String, required: false },
-  date: { type: Date, default: Date.now },
+  date: { type: Date, default: Date.now, required: false },
 });
 
 export const Game = mongoose.model<GameDocument>("Game", gameSchema);

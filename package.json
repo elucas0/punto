@@ -7,6 +7,7 @@
     "dev": "vite",
     "server-mongo": "tsx src/api/mongodb/server.ts",
     "server-mysql": "tsx src/api/mysql/server.ts",
+    "server-sqlite": "tsx src/api/sqlite/server.ts",
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
@@ -23,6 +24,7 @@
     "mysql2": "^3.6.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "sqlite": "^5.1.1",
     "sqlite3": "^5.1.6",
     "tsx": "^4.2.0"
   },

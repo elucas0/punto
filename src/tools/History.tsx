@@ -1,30 +1,56 @@
-import { PencilIcon, TrashIcon } from "@heroicons/react/20/solid";
-import { Card, Typography, Dialog, DialogHeader, DialogBody, DialogFooter, Button, Input } from "@material-tailwind/react";
+import { ArrowPathIcon, PencilIcon, TrashIcon } from "@heroicons/react/20/solid";
+import { Card, Typography, Dialog, DialogHeader, DialogBody, DialogFooter, Button, Input, IconButton } from "@material-tailwind/react";
 import { useEffect, useState } from "react";
 import { DbSelector, DbType } from "../game/components/DbSelector";
 
 
 const TABLE_HEAD = ["ID", "Joueurs", "Coups", "Date", "Gagnant", "", ""];
 
-export function History() {
-    const [selectedDb, setSelectedDb] = useState<DbType>();
+export function History({ selectedDb, setSelectedDb }: { selectedDb: DbType, setSelectedDb: (dbName: DbType) => void }) {
     const [gameData, setGameData] = useState<any[]>([]);
     const [open, setOpen] = useState<boolean>(false);
     const [editingPlayers, setEditingPlayers] = useState<string[]>([]);
     const [editingDate, setEditingDate] = useState<string>("");
     const [editingGameId, setEditingGameId] = useState<string>("");
     const [editingWinner, setEditingWinner] = useState<string>("");
+    const [dbPort, setDbPort] = useState<number>();
 
     const handleOpen = (gameId: string) => {
         setOpen(!open)
         setEditingGameId(gameId)
     };
 
+    useEffect(() => {
+        if (!selectedDb) {
+            return;
+        } else {
+            switch (selectedDb) {
+                case "MongoDB":
+                    setDbPort(3000);
+                    break;
+                case "MySQL":
+                    setDbPort(3001);
+                    break;
+                case "SQLite":
+                    setDbPort(3002);
+                    break;
+            }
+        }
+    }, [selectedDb]);
+
     const fetchGames = (): void => {
+
         const fetchData = async () => {
             try {
-                const response = await fetch(`http://localhost:3000/api/games`);
+                const response = await fetch(`http://localhost:${dbPort}/api/games`);
                 const data = await response.json();
+                if (dbPort != 3000) {
+                    data.forEach((game: any) => {
+                        game._id = game.id;
+                        game.players = game.players.split(", ");
+                        delete game.id;
+                    });
+                }
                 setGameData(data);
             } catch (error) {
                 console.error("Error fetching game data:", error);
@@ -37,7 +63,7 @@ export function History() {
     const updateGame = async (gameId: string): Promise<void> => {
         try {
             // Utilisez la méthode PUT pour mettre à jour la partie
-            const response = await fetch(`http://localhost:3000/api/games/${gameId}`, {
+            const response = await fetch(`http://localhost:${dbPort}/api/games/${gameId}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -62,7 +88,7 @@ export function History() {
     const deleteGame = async (gameId: string): Promise<void> => {
         try {
             // Utilisez la méthode DELETE pour supprimer la partie
-            const response = await fetch(`http://localhost:3000/api/games/${gameId}`, {
+            const response = await fetch(`http://localhost:${dbPort}/api/games/${gameId}`, {
                 method: "DELETE",
             });
 
@@ -78,9 +104,6 @@ export function History() {
     };
 
     useEffect(() => {
-        if (selectedDb) {
-            fetchGames();
-        }
         if (open && gameData.length > 0) {
             const selectedGame = gameData.find((game) => game._id === editingGameId);
 
@@ -95,7 +118,12 @@ export function History() {
     return (
         <div className="flex flex-col items-center gap-4">
             <h1 className="font-poppinslight text-white text-xl">Historique des parties</h1>
-            <DbSelector selectedDb={selectedDb} setSelected={setSelectedDb} />
+            <div className="flex gap-5">
+                <DbSelector selectedDb={selectedDb} setSelectedDb={setSelectedDb} />
+                <IconButton color="yellow" onClick={() => fetchGames()}>
+                    <ArrowPathIcon className="w-5 h-5" />
+                </IconButton>
+            </div>
             <Card className="h-full w-full overflow-scroll">
                 <table className="w-full min-w-max table-auto text-left">
                     <thead>
