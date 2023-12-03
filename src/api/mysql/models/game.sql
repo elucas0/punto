@@ -1,0 +1,6 @@
+CREATE TABLE games (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  players JSON NOT NULL,
+  moves JSON NOT NULL,
+  date DATETIME NOT NULL
+);

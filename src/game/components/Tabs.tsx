@@ -6,10 +6,10 @@ import {
   TabPanel,
 } from "@material-tailwind/react";
 import { Export } from "../../tools/Export";
-import { Import } from "../../tools/Import";
+import { Generator } from "../../tools/Generator";
 import { History } from "../../tools/History";
 import { MainMenu } from "..";
-import { ArrowDownOnSquareIcon, ArrowUpOnSquareIcon, ClockIcon, HomeIcon } from "@heroicons/react/20/solid";
+import { ArrowPathIcon, ArrowUpOnSquareIcon, ClockIcon, HomeIcon } from "@heroicons/react/20/solid";
 import React from "react";
 
 type TabType = {
@@ -34,10 +34,10 @@ export function TabsGroup() {
       component: <Export />,
     },
     {
-      label: "Import",
-      value: "import",
-      icon: ArrowDownOnSquareIcon,
-      component: <Import />,
+      label: "Générateur",
+      value: "generate",
+      icon: ArrowPathIcon,
+      component: <Generator />,
     },
     {
       label: "Historique",
